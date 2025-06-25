@@ -1,0 +1,49 @@
+name: Test Windows
+
+on:
+    push:
+        branches:
+            - main
+
+jobs:
+    test:
+        strategy:
+            matrix:
+                # windows-11-arm
+                os: [windows-latest, windows-11-arm]
+                target: [user-installer, system-installer, archive]
+
+        runs-on: ${{ matrix.os }}
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "24"
+
+            - name: Setup .NET
+              uses: actions/setup-dotnet@v4
+              with:
+                  dotnet-version: "9.x"
+
+            - name: Install FFmpeg
+              run: |
+                  Write-Host "Installing FFmpeg via Chocolatey..."
+                  choco install ffmpeg -y
+                  Write-Host "FFmpeg installed successfully"
+                  ffmpeg -version
+              shell: pwsh
+
+            - name: Install dependencies
+              run: npm install
+
+            - name: Run the application
+              run: npm run run -- --target=${{ matrix.target }}
+
+            - name: Upload output video
+              uses: actions/upload-artifact@v4
+              with:
+                  name: ${{ matrix.os }}-${{ matrix.target }}-output-video
+                  path: output.mp4

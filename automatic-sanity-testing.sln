@@ -1,0 +1,24 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowsAutomationDriver", "windowsAutomationDriver\WindowsAutomationDriver.csproj", "{81BB2D90-9250-B375-F1E2-AA9992844D33}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{81BB2D90-9250-B375-F1E2-AA9992844D33}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{81BB2D90-9250-B375-F1E2-AA9992844D33}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{81BB2D90-9250-B375-F1E2-AA9992844D33}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{81BB2D90-9250-B375-F1E2-AA9992844D33}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B863BDA4-B97D-4882-A7D1-55FD573F8E63}
+	EndGlobalSection
+EndGlobal

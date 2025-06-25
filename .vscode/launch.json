@@ -1,0 +1,30 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "Debug index.ts with tsx",
+			"type": "node",
+			"request": "launch",
+			"program": "${workspaceFolder}/dev.entry.js",
+			"2runtimeExecutable": "${workspaceFolder}/node_modules/.bin/tsx.ps1",
+			"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/ts-node.ps1",
+			"runtimeArgs": ["-T"],
+			"console": "integratedTerminal",
+			"internalConsoleOptions": "neverOpen",
+			"skipFiles": ["<node_internals>/**"],
+			"resolveSourceMapLocations": [
+				"${workspaceFolder}/**",
+				"!**/node_modules/**"
+			],
+			"sourceMaps": true,
+			"cwd": "${workspaceFolder}"
+		},
+		{
+			"name": "C#: WindowsAutomationDriver",
+			"type": "dotnet",
+			"request": "launch",
+			"projectPath": "${workspaceFolder}\\windowsAutomationDriver\\WindowsAutomationDriver.csproj",
+			"launchConfigurationId": "TargetFramework=;WindowsAutomationDriver"
+		}
+	]
+}

@@ -1,0 +1,12 @@
+{
+	"ts-node": {
+		"compilerOptions": {
+			"module": "commonjs"
+		}
+	},
+	"compilerOptions": {
+		"module": "commonjs",
+		"strict": true,
+		"target": "es2022"
+	}
+}

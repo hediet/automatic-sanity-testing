@@ -1,0 +1,48 @@
+name: Test
+
+on:
+    push:
+        branches:
+            - main
+
+jobs:
+    test:
+        runs-on: windows-latest
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "24"
+
+            - name: Setup .NET
+              uses: actions/setup-dotnet@v4
+              with:
+                  dotnet-version: "8.x"
+
+            - name: Download and Install VS Code CLI
+              run: |
+                  Write-Host "Downloading VS Code CLI..."
+                  $downloadUrl = "https://update.code.visualstudio.com/latest/cli-win32-x64/stable"
+                  Invoke-WebRequest -Uri $downloadUrl -OutFile "code-cli.zip"
+
+                  Write-Host "Extracting VS Code CLI..."
+                  Expand-Archive -Path "code-cli.zip" -DestinationPath "vscode-cli" -Force
+
+                  # Verify installation
+                  $cliPath = ".\vscode-cli\code.exe"
+                  if (Test-Path $cliPath) {
+                      Write-Host "VS Code CLI installed successfully at: $cliPath"
+                      # Test the CLI
+                      & $cliPath --version
+                  } else {
+                      Write-Error "VS Code CLI installation failed"
+                      exit 1
+                  }
+              shell: pwsh
+
+            - name: Setup VS Code Tunnel
+              run: "./vscode-cli/code.exe tunnel"
