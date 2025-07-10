@@ -430,6 +430,91 @@ namespace WindowsAutomationDriver
             return null;
         }
 
+        public void SendKey(string key)
+        {
+            try
+            {
+                var keyCode = ConvertStringToKey(key);
+                SendKeys.SendWait(keyCode);
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Error sending key '{key}': {ex.Message}");
+            }
+        }
+
+        public void SendText(string text)
+        {
+            try
+            {
+                // Escape special characters for SendKeys
+                var escapedText = text.Replace("+", "{+}")
+                                     .Replace("^", "{^}")
+                                     .Replace("%", "{%}")
+                                     .Replace("~", "{~}")
+                                     .Replace("(", "{(}")
+                                     .Replace(")", "{)}")
+                                     .Replace("[", "{[}")
+                                     .Replace("]", "{]}")
+                                     .Replace("{", "{{}")
+                                     .Replace("}", "{}}");
+
+                SendKeys.SendWait(escapedText);
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Error sending text '{text}': {ex.Message}");
+            }
+        }
+
+        private string ConvertStringToKey(string key)
+        {
+            // Convert common key names to SendKeys format
+            return key.ToUpper() switch
+            {
+                "F1" => "{F1}",
+                "F2" => "{F2}",
+                "F3" => "{F3}",
+                "F4" => "{F4}",
+                "F5" => "{F5}",
+                "F6" => "{F6}",
+                "F7" => "{F7}",
+                "F8" => "{F8}",
+                "F9" => "{F9}",
+                "F10" => "{F10}",
+                "F11" => "{F11}",
+                "F12" => "{F12}",
+                "ENTER" => "{ENTER}",
+                "RETURN" => "{ENTER}",
+                "TAB" => "{TAB}",
+                "SPACE" => " ",
+                "ESC" => "{ESC}",
+                "ESCAPE" => "{ESC}",
+                "BACKSPACE" => "{BACKSPACE}",
+                "DELETE" => "{DELETE}",
+                "HOME" => "{HOME}",
+                "END" => "{END}",
+                "PAGEUP" => "{PGUP}",
+                "PAGEDOWN" => "{PGDN}",
+                "UP" => "{UP}",
+                "DOWN" => "{DOWN}",
+                "LEFT" => "{LEFT}",
+                "RIGHT" => "{RIGHT}",
+                "INSERT" => "{INSERT}",
+                "CTRL+A" => "^a",
+                "CTRL+C" => "^c",
+                "CTRL+V" => "^v",
+                "CTRL+X" => "^x",
+                "CTRL+Z" => "^z",
+                "CTRL+Y" => "^y",
+                "CTRL+S" => "^s",
+                "CTRL+O" => "^o",
+                "CTRL+N" => "^n",
+                "ALT+F4" => "%{F4}",
+                _ => key.Length == 1 ? key : $"{{{key}}}"
+            };
+        }
+
         [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
         public static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint cButtons, uint dwExtraInfo);
 

@@ -6,6 +6,9 @@ export interface IAutomationDriver {
     clickElement(node: UINode): Promise<void>;
     revealElement(node: UINode): Promise<void>;
 
+    sendKey(key: string): Promise<void>;
+    sendText(text: string): Promise<void>;
+
     createProcess(executablePath: string, args?: string[]): Promise<IProcess>;
 
     findRootProcesses(options: { executablePath?: string; executableName?: string }): Promise<ProcessTree[]>;
@@ -18,17 +21,18 @@ export class ProcessTree {
         readonly windows: readonly UINode[],
     ) { }
 
-    public getAllWindows(): UINode[] {
-        const result: UINode[] = [];
-        function collectWindows(node: UINode) {
-            result.push(node);
-            for (const child of node.children) {
-                collectWindows(child);
+    public getAllWindows(): { window: UINode, process: IProcess }[] {
+        const result: { window: UINode, process: IProcess }[] = [];
+
+        function addFromProcessTree(tree: ProcessTree) {
+            for (const window of tree.windows) {
+                result.push({ window, process: tree.process });
+            }
+            for (const child of tree.children) {
+                addFromProcessTree(child);
             }
         }
-        for (const window of this.windows) {
-            collectWindows(window);
-        }
+        addFromProcessTree(this);
         return result;
     }
 }

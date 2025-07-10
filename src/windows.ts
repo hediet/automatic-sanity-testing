@@ -47,7 +47,10 @@ export class WindowsAutomationDriver extends Disposable implements IAutomationDr
             console.error(`Process output: ${data}`);
         });
         this._store.add({ dispose: () => { proc.kill(); } });
-        const t = TypedChannel.fromStream(NodeJsMessageStreamWithHeaders.connectToProcess(proc).log(), { logger: new ConsoleRpcLogger() })
+
+        const t = TypedChannel.fromStream(NodeJsMessageStreamWithHeaders.connectToProcess(proc), {
+            logger: new ConsoleRpcLogger()
+        })
         this.server = c.getServer(t, {});
         t.startListen();
 
@@ -119,6 +122,14 @@ export class WindowsAutomationDriver extends Disposable implements IAutomationDr
 
     async revealElement(node: UINode): Promise<void> {
         await this.server.server.revealElement({ elementId: node.id });
+    }
+
+    async sendKey(key: string): Promise<void> {
+        await this.server.server.sendKey({ key });
+    }
+
+    async sendText(text: string): Promise<void> {
+        await this.server.server.sendText({ text });
     }
 
     private convertToUINode(node: any, parent: UINode | undefined = undefined): UINode {
@@ -278,6 +289,20 @@ const c = contract({
                 executableName: z.string().optional(),
             }),
             result: z.array(zProcessTreeInfo),
+        }),
+        sendKey: requestType({
+            method: 'SendKey',
+            params: z.object({
+                key: z.string(),
+            }),
+            result: z.null(),
+        }),
+        sendText: requestType({
+            method: 'SendText',
+            params: z.object({
+                text: z.string(),
+            }),
+            result: z.null(),
         }),
     },
     client: {},

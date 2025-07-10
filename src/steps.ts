@@ -14,6 +14,9 @@ const vsCodeExecutablePath = join(vsCodeInstallPath, "Code.exe");
 const uninstPathUserInstaller = join(vsCodeInstallPath, "unins000.exe");
 
 export const outputDir = join(__dirname, "../output");
+if (!existsSync(outputDir)) {
+    mkdirSync(outputDir, { recursive: true });
+}
 
 export function getSteps(store: DisposableStore, artifactRef: ArtifactRef) {
     return steps(
@@ -38,19 +41,32 @@ export function getSteps(store: DisposableStore, artifactRef: ArtifactRef) {
         artifactRef.artifact.props.flavor === 'archive' ? getRunFromArchiveSteps() : getSetupSteps(),
 
         step({ name: 'WaitForApp' }, async ({ driver }, ctx) => {
-            const w = await waitFor(async () => {
+            const { process, window } = await waitFor(async () => {
                 const p = await driver.findRootProcesses({ executableName: 'Code.exe' });
-                const window = p.map(e => e.getAllWindows()[0]).find(e => e !== undefined);
-                return window;
+
+                return p.map(p => p.getAllWindows()[0]).find(e => e !== undefined);
             }, { timeoutMs: 30 * 1000 });
 
             await waitMs(10 * 1000);
 
-            const screenshot = await driver.createScreenshot(w.rect);
+            const screenshot = await driver.createScreenshot(window.rect);
             const screenshotPath = join(outputDir, 'screenshot.png');
             await writeFile(screenshotPath, Buffer.from(screenshot.base64Png, 'base64'));
 
-            return { driver };
+            return { driver, vscodeProcess: process };
+        }),
+
+        step({ name: 'Open about dialog' }, async ({ driver, vscodeProcess }, ctx) => {
+            driver.sendKey('F1');
+            await waitMs(100);
+            driver.sendText('about');
+            await waitMs(100);
+            driver.sendKey('Enter');
+            await waitMs(500);
+
+            const screenshot = await driver.createScreenshot();
+            const screenshotPath = join(outputDir, 'screenshot-about.png');
+            await writeFile(screenshotPath, Buffer.from(screenshot.base64Png, 'base64'));
         }),
     );
 }
