@@ -14,12 +14,14 @@ async function main() {
         .description("Automated sanity testing tool")
         .version("1.0.0")
         .requiredOption("-t, --target <target>", "Target environment (user, system, or archive)")
+        .requiredOption("-c, --vscode-commit <commit>", "VS Code commit hash")
         .parse();
 
     const options = program.opts();
     const target = options.target as string;
+    const vscodeCommit = options.vscodeCommit as string;
     const artifact = new ArtifactRef(
-        'cb0c47c0cfaad0757385834bd89d410c78a856c0',
+        vscodeCommit,
         VsCodeArtifactName.build({
             arch: getArch(),
             os: getOs(),

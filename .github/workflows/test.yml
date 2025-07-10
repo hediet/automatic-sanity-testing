@@ -4,6 +4,13 @@ on:
     push:
         branches:
             - main
+    workflow_dispatch:
+        inputs:
+            vscodeCommit:
+                description: "VS Code commit hash to test"
+                required: true
+                default: "cb0c47c0cfaad0757385834bd89d410c78a856c0"
+                type: string
 
 jobs:
     test:
@@ -12,6 +19,10 @@ jobs:
                 # windows-11-arm
                 os: [windows-latest, windows-11-arm]
                 target: [user-installer, system-installer, archive]
+                vscodeCommit:
+                    [
+                        "${{ github.event.inputs.vscodeCommit || 'cb0c47c0cfaad0757385834bd89d410c78a856c0' }}",
+                    ]
 
         runs-on: ${{ matrix.os }}
         steps:
@@ -40,7 +51,7 @@ jobs:
               run: npm install
 
             - name: Run the application
-              run: npm run run -- --target=${{ matrix.target }}
+              run: npm run run -- --target=${{ matrix.target }} --vscode-commit=${{ matrix.vscodeCommit }}
 
             - name: Upload output video
               uses: actions/upload-artifact@v4
