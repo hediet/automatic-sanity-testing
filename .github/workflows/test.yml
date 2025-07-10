@@ -71,7 +71,17 @@ jobs:
             - name: Merge outputs into single directory
               run: |
                   mkdir -p ./merged-output
-                  find ./all-outputs -type f -exec cp {} ./merged-output/ \;
+                  for artifact_dir in ./all-outputs/*/; do
+                      artifact_name=$(basename "$artifact_dir")
+                      # Remove the "-output" suffix from artifact name to get the prefix
+                      prefix=${artifact_name%-output}
+                      for file in "$artifact_dir"*; do
+                          if [ -f "$file" ]; then
+                              filename=$(basename "$file")
+                              cp "$file" "./merged-output/${prefix}-${filename}"
+                          fi
+                      done
+                  done
                   ls -la ./merged-output/
 
             - name: Upload merged result
