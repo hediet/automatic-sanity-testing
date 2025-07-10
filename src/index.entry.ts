@@ -16,8 +16,8 @@ export function run() {
             VsCodeArtifactName.build({
                 arch: getArch(),
                 os: getOs(),
-                type: 'desktop',
-                flavor: 'archive',
+                type: 'server',
+                flavor: 'web',
             }),
             "stable",
         );

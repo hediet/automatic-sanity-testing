@@ -5,7 +5,9 @@ import { composedStep, step, steps } from "./steps/steps";
 import { WindowsAutomationDriver } from "./windows";
 import { existsSync, mkdirSync } from "node:fs";
 import { ArtifactRef } from "./vscode/getDownloadUrl";
-import { writeFile } from "node:fs/promises";
+import { readdir, writeFile } from "node:fs/promises";
+import { spawn } from "node:child_process";
+import puppeteer from 'puppeteer';
 import AdmZip = require("adm-zip");
 
 const appDataLocal = process.env.LOCALAPPDATA!;
@@ -18,19 +20,60 @@ if (!existsSync(outputDir)) {
     mkdirSync(outputDir, { recursive: true });
 }
 
+
 export function getSteps(store: DisposableStore, artifactRef: ArtifactRef) {
+    if (artifactRef.artifact.props.type === 'server') {
+        return steps(
+            step({ name: 'Download Artifact if it does not exist' }, async (args, ctx) => {
+                const { artifactPath } = await downloadArtifact(artifactRef);
+                return { artifactPath };
+            }),
+            step({ name: 'Extract Server' }, async ({ artifactPath }, ctx) => {
+                const { extractedDir } = await extractArtifact(artifactPath);
+                // find first folder in extractedDir
+                const folders = (await readdir(extractedDir, { withFileTypes: true }))
+                    .filter(dirent => dirent.isDirectory())
+                    .map(dirent => dirent.name);
+                const firstFolder = folders[0];
+                const extractedDir2 = join(extractedDir, firstFolder);
+
+                return { artifactPath, extractedDir: extractedDir2 };
+            }),
+            step({ name: 'Run Server' }, async ({ extractedDir }, ctx) => {
+                spawn('cmd.exe', ['/c', join(extractedDir, 'bin', 'code-server.cmd'), '--accept-server-license-terms', '--connection-token', 'testing-only-token'], {
+                    cwd: extractedDir,
+                    stdio: 'inherit',
+                });
+
+                await waitMs(5000);
+
+                const browser = await puppeteer.launch({ headless: false });
+                const page = await browser.newPage();
+
+                await page.goto('http://localhost:8000?tkn=testing-only-token&folder=/C%3A/');
+                await waitMs(5000);
+                return { page };
+            }),
+            step({ name: 'Open about dialog' }, async (args, ctx) => {
+                const { page } = args;
+                await page.keyboard.press('F1');//
+                await waitMs(100);
+                await page.keyboard.type('about');
+                await waitMs(100);
+                await page.keyboard.press('Enter');
+                await waitMs(500);
+
+                const screenshotPath = join(outputDir, 'screenshot-about.png');
+                await page.screenshot({ path: screenshotPath as any });
+
+                console.log(`Screenshot saved to ${screenshotPath}`);
+            }),
+        );
+    }
+
     return steps(
         step({ name: 'Download Artifact if it does not exist' }, async (args, ctx) => {
-            const targetDir = join(__dirname, "../temp", artifactRef.toString());
-
-            let artifactPath: string;
-            if (!existsSync(targetDir)) {
-                const result = await artifactRef.downloadToDir(targetDir);
-                artifactPath = result.path;
-                console.log("VS Code installer downloaded successfully");
-            } else {
-                artifactPath = join(targetDir, await artifactRef.getFileName());
-            }
+            const { artifactPath } = await downloadArtifact(artifactRef);
             return { artifactPath };
         }),
         step({ name: 'Driver Setup' }, async (args, ctx) => {
@@ -38,7 +81,9 @@ export function getSteps(store: DisposableStore, artifactRef: ArtifactRef) {
             return { driver, ...args };
         }),
 
-        artifactRef.artifact.props.flavor === 'archive' ? getRunFromArchiveSteps() : getSetupSteps(),
+        (artifactRef.artifact.props.flavor === 'archive')
+            ? getExtractArchiveAndRunSteps()
+            : getSetupAndRunSteps(),
 
         step({ name: 'WaitForApp' }, async ({ driver }, ctx) => {
             const { process, window } = await waitFor(async () => {
@@ -72,7 +117,7 @@ export function getSteps(store: DisposableStore, artifactRef: ArtifactRef) {
 }
 
 
-function getSetupSteps() {
+function getSetupAndRunSteps() {
     return composedStep<{ driver: IAutomationDriver, artifactPath: string }>()(
         step({ name: 'Start Setup' }, async ({ driver, artifactPath }, ctx) => {
             if (existsSync(uninstPathUserInstaller)) {
@@ -143,23 +188,42 @@ function getSetupSteps() {
     );
 }
 
-function getRunFromArchiveSteps() {
+
+async function downloadArtifact(artifactRef: ArtifactRef) {
+    const targetDir = join(__dirname, "../temp", artifactRef.toString());
+
+    let artifactPath: string;
+    if (!existsSync(targetDir)) {
+        const result = await artifactRef.downloadToDir(targetDir);
+        artifactPath = result.path;
+        console.log("VS Code installer downloaded successfully");
+    } else {
+        artifactPath = join(targetDir, await artifactRef.getFileName());
+    }
+    return { artifactPath };
+}
+
+function extractArtifact(artifactPath: string): Promise<{ extractedDir: string }> {
+    const dir = dirname(artifactPath);
+    const extractedDir = join(dir, 'extracted');
+
+    if (!existsSync(extractedDir)) {
+        console.log(`Extracting ${artifactPath} to ${extractedDir}`);
+        mkdirSync(extractedDir, { recursive: true });
+
+        const zip = new AdmZip(artifactPath);
+        zip.extractAllTo(extractedDir, true);
+        console.log('Extraction completed');
+    } else {
+        console.log('Archive already extracted');
+    }
+    return Promise.resolve({ extractedDir });
+}
+
+function getExtractArchiveAndRunSteps() {
     return composedStep<{ driver: IAutomationDriver, artifactPath: string }>()(
         step({ name: 'Extract artifact' }, async ({ driver, artifactPath }, ctx) => {
-            const dir = dirname(artifactPath);
-            const extractedDir = join(dir, 'extracted');
-
-            if (!existsSync(extractedDir)) {
-                console.log(`Extracting ${artifactPath} to ${extractedDir}`);
-                mkdirSync(extractedDir, { recursive: true });
-
-                const zip = new AdmZip(artifactPath);
-                zip.extractAllTo(extractedDir, true);
-                console.log('Extraction completed');
-            } else {
-                console.log('Archive already extracted');
-            }
-
+            const { extractedDir } = await extractArtifact(artifactPath);
             const p = await driver.createProcess(join(extractedDir, 'Code.exe'));
             ctx.onReset(async () => await p.kill());
             return { driver, process: p };

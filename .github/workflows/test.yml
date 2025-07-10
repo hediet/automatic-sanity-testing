@@ -18,7 +18,7 @@ jobs:
             matrix:
                 # windows-11-arm
                 os: [windows-latest, windows-11-arm]
-                target: [user-installer, system-installer, archive]
+                target: [user-installer, system-installer, archive, server]
                 vscodeCommit:
                     [
                         "${{ github.event.inputs.vscodeCommit || 'cb0c47c0cfaad0757385834bd89d410c78a856c0' }}",

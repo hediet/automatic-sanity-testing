@@ -25,10 +25,11 @@ async function main() {
         VsCodeArtifactName.build({
             arch: getArch(),
             os: getOs(),
-            type: 'desktop',
+            type: target === "server" ? "server" : "desktop",
             flavor: ({
-                "user": 'user',
-                "archive": 'archive',
+                "user": "user",
+                "archive": "archive",
+                "server": "web",
                 "system": undefined,
             } as any)[target],
         }),
