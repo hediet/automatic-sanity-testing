@@ -53,8 +53,29 @@ jobs:
             - name: Run the application
               run: npm run run -- --target=${{ matrix.target }} --vscode-commit=${{ matrix.vscodeCommit }}
 
-            - name: Upload output video
+            - name: Upload output files
               uses: actions/upload-artifact@v4
               with:
-                  name: ${{ matrix.os }}-${{ matrix.target }}-output-video
-                  path: output.mp4
+                  name: ${{ matrix.os }}-${{ matrix.target }}-output
+                  path: ./output/
+
+    merge-results:
+        needs: test
+        runs-on: ubuntu-latest
+        steps:
+            - name: Download all artifacts
+              uses: actions/download-artifact@v4
+              with:
+                  path: ./all-outputs
+
+            - name: Merge outputs into single directory
+              run: |
+                  mkdir -p ./merged-output
+                  find ./all-outputs -type f -exec cp {} ./merged-output/ \;
+                  ls -la ./merged-output/
+
+            - name: Upload merged result
+              uses: actions/upload-artifact@v4
+              with:
+                  name: result
+                  path: ./merged-output/

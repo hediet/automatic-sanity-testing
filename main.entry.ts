@@ -1,10 +1,10 @@
 import { Command } from "commander";
 import { DisposableStore } from "./src/disposables";
-import { getSteps } from "./src/steps";
+import { getSteps, outputDir } from "./src/steps";
 import { StepsRunner } from "./src/steps/StepsRunner";
 import { ScreenRecording } from "./src/ScreenRecording";
 import { ArtifactRef, VsCodeArtifactName, getArch, getOs } from "./src/vscode/getDownloadUrl";
-
+import { join } from "node:path";
 
 async function main() {
     const program = new Command();
@@ -38,7 +38,7 @@ async function main() {
     console.log(`Running automated sanity testing for target: ${target}`);
     const store = new DisposableStore();
 
-    const recording = store.add(await ScreenRecording.record("output.mp4"));
+    const recording = store.add(await ScreenRecording.record(join(outputDir, "recording.mp4")));
 
     const runner = store.add(new StepsRunner(getSteps(store, artifact)));
     try {

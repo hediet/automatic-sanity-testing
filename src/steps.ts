@@ -5,7 +5,7 @@ import { composedStep, step, steps } from "./steps/steps";
 import { WindowsAutomationDriver } from "./windows";
 import { existsSync, mkdirSync } from "node:fs";
 import { ArtifactRef } from "./vscode/getDownloadUrl";
-import { exec } from "node:child_process";
+import { writeFile } from "node:fs/promises";
 import AdmZip = require("adm-zip");
 
 const appDataLocal = process.env.LOCALAPPDATA!;
@@ -13,7 +13,48 @@ const vsCodeInstallPath = join(appDataLocal, "Programs/Microsoft VS Code");
 const vsCodeExecutablePath = join(vsCodeInstallPath, "Code.exe");
 const uninstPathUserInstaller = join(vsCodeInstallPath, "unins000.exe");
 
-// https://vscode.download.prss.microsoft.com/dbazure/download/insider/af0a171e61fa7bce22b53002bc2f3970315f7b73/VSCodeUserSetup-x64-1.103.0-insider.exe
+export const outputDir = join(__dirname, "../output");
+
+export function getSteps(store: DisposableStore, artifactRef: ArtifactRef) {
+    return steps(
+        step({ name: 'Download Artifact if it does not exist' }, async (args, ctx) => {
+            const targetDir = join(__dirname, "../temp", artifactRef.toString());
+
+            let artifactPath: string;
+            if (!existsSync(targetDir)) {
+                const result = await artifactRef.downloadToDir(targetDir);
+                artifactPath = result.path;
+                console.log("VS Code installer downloaded successfully");
+            } else {
+                artifactPath = join(targetDir, await artifactRef.getFileName());
+            }
+            return { artifactPath };
+        }),
+        step({ name: 'Driver Setup' }, async (args, ctx) => {
+            const driver: IAutomationDriver = await WindowsAutomationDriver.create();
+            return { driver, ...args };
+        }),
+
+        artifactRef.artifact.props.flavor === 'archive' ? getRunFromArchiveSteps() : getSetupSteps(),
+
+        step({ name: 'WaitForApp' }, async ({ driver }, ctx) => {
+            const w = await waitFor(async () => {
+                const p = await driver.findRootProcesses({ executableName: 'Code.exe' });
+                const window = p.map(e => e.getAllWindows()[0]).find(e => e !== undefined);
+                return window;
+            }, { timeoutMs: 30 * 1000 });
+
+            await waitMs(10 * 1000);
+
+            const screenshot = await driver.createScreenshot(w.rect);
+            const screenshotPath = join(outputDir, 'screenshot.png');
+            await writeFile(screenshotPath, Buffer.from(screenshot.base64Png, 'base64'));
+
+            return { driver };
+        }),
+    );
+}
+
 
 function getSetupSteps() {
     return composedStep<{ driver: IAutomationDriver, artifactPath: string }>()(
@@ -85,19 +126,6 @@ function getSetupSteps() {
         }),
     );
 }
-function runCommand(command: string, args: string[], options: { cwd?: string } = {}): Promise<void> {
-    return new Promise((resolve, reject) => {
-        exec(`${command} ${args.join(' ')}`, { cwd: options.cwd }, (error, stdout, stderr) => {
-            if (error) {
-                console.error("Error running command:", stderr);
-                reject(error);
-            } else {
-                console.log("Command output:", stdout);
-                resolve();
-            }
-        });
-    });
-}
 
 function getRunFromArchiveSteps() {
     return composedStep<{ driver: IAutomationDriver, artifactPath: string }>()(
@@ -123,41 +151,6 @@ function getRunFromArchiveSteps() {
     );
 }
 
-export function getSteps(store: DisposableStore, artifactRef: ArtifactRef) {
-    return steps(
-        step({ name: 'Download Artifact if it does not exist' }, async (args, ctx) => {
-            const targetDir = join(__dirname, "../temp", artifactRef.toString());
-
-            let artifactPath: string;
-            if (!existsSync(targetDir)) {
-                const result = await artifactRef.downloadToDir(targetDir);
-                artifactPath = result.path;
-                console.log("VS Code installer downloaded successfully");
-            } else {
-                artifactPath = join(targetDir, await artifactRef.getFileName());
-            }
-            return { artifactPath };
-        }),
-        step({ name: 'Driver Setup' }, async (args, ctx) => {
-            const driver: IAutomationDriver = await WindowsAutomationDriver.create();
-            return { driver, ...args };
-        }),
-
-        artifactRef.artifact.props.flavor === 'archive' ? getRunFromArchiveSteps() : getSetupSteps(),
-
-        step({ name: 'WaitForApp' }, async ({ driver }, ctx) => {
-            await waitFor(async () => {
-                const p = await driver.findRootProcesses({ executableName: 'Code.exe' });
-                const proc = p.find(e => e.getAllWindows().length > 0);
-                return proc;
-            }, { timeoutMs: 30 * 1000 });
-
-            await waitMs(10 * 1000);
-
-            return { driver };
-        }),
-    );
-}
 
 function waitMs(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
