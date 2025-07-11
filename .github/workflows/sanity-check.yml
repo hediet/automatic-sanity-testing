@@ -83,7 +83,6 @@ jobs:
               continue-on-error: true
 
             - name: Install VS Code CLI
-              if: ${{ failure() }}
               run: |
                   Invoke-WebRequest -Uri "https://code.visualstudio.com/sha/download?build=stable&os=cli-win32-arm64" -OutFile "vscode_cli.zip"
                   Expand-Archive -Path "vscode_cli.zip" -DestinationPath "vscode_cli"
@@ -92,7 +91,6 @@ jobs:
                   echo "$(Get-Location)\vscode_cli" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
             - name: Start VS Code Tunnel
-              if: ${{ steps.install-cli.conclusion == 'success' }}
               run: code tunnel --accept-server-license-terms
 
             - name: Upload output files
