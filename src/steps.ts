@@ -45,23 +45,25 @@ export function getSteps(store: DisposableStore, artifactRef: ArtifactRef) {
                     stdio: 'inherit',
                 });
 
-                await waitMs(5000);
+                await waitMs(5_000);
 
                 const browser = await puppeteer.launch({ headless: false });
                 const page = await browser.newPage();
 
                 await page.goto('http://localhost:8000?tkn=testing-only-token&folder=/C%3A/');
-                await waitMs(5000);
+                await waitMs(10_000);
                 return { page };
             }),
             step({ name: 'Open about dialog' }, async (args, ctx) => {
                 const { page } = args;
-                await page.keyboard.press('F1');//
-                await waitMs(100);
+                await page.keyboard.press('Enter'); // trust dialog
+                await waitMs(1000);
+                await page.keyboard.press('F1');
+                await waitMs(1000);
                 await page.keyboard.type('about');
-                await waitMs(100);
+                await waitMs(1000);
                 await page.keyboard.press('Enter');
-                await waitMs(500);
+                await waitMs(1000);
 
                 const screenshotPath = join(outputDir, 'screenshot-about.png');
                 await page.screenshot({ path: screenshotPath as any });
@@ -92,22 +94,22 @@ export function getSteps(store: DisposableStore, artifactRef: ArtifactRef) {
                 return p.map(p => p.getAllWindows()[0]).find(e => e !== undefined);
             }, { timeoutMs: 30 * 1000 });
 
-            await waitMs(10 * 1000);
+            await waitMs(15_000);
 
-            const screenshot = await driver.createScreenshot(window.rect);
+            /*const screenshot = await driver.createScreenshot(window.rect);
             const screenshotPath = join(outputDir, 'screenshot.png');
-            await writeFile(screenshotPath, Buffer.from(screenshot.base64Png, 'base64'));
+            await writeFile(screenshotPath, Buffer.from(screenshot.base64Png, 'base64'));*/
 
             return { driver, vscodeProcess: process };
         }),
 
         step({ name: 'Open about dialog' }, async ({ driver, vscodeProcess }, ctx) => {
             driver.sendKey('F1');
-            await waitMs(100);
+            await waitMs(1000);
             driver.sendText('about');
-            await waitMs(100);
+            await waitMs(1000);
             driver.sendKey('Enter');
-            await waitMs(500);
+            await waitMs(1000);
 
             const screenshot = await driver.createScreenshot();
             const screenshotPath = join(outputDir, 'screenshot-about.png');

@@ -1,0 +1,46 @@
+name: Test Windows
+
+on:
+    push:
+        branches:
+            - main
+    workflow_dispatch:
+        inputs:
+            vscodeCommit:
+                description: "VS Code commit hash to test"
+                required: true
+                default: "cb0c47c0cfaad0757385834bd89d410c78a856c0"
+                type: string
+
+jobs:
+    test:
+        strategy:
+            matrix:
+                # windows-11-arm
+                os: [windows-11-arm]
+                target: [user-installer]
+                vscodeCommit:
+                    [
+                        "${{ github.event.inputs.vscodeCommit || 'cb0c47c0cfaad0757385834bd89d410c78a856c0' }}",
+                    ]
+
+        runs-on: ${{ matrix.os }}
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "24"
+
+            - name: Install VS Code CLI
+              run: |
+                  Invoke-WebRequest -Uri "https://code.visualstudio.com/sha/download?build=stable&os=cli-win32-arm64" -OutFile "vscode_cli.zip"
+                  Expand-Archive -Path "vscode_cli.zip" -DestinationPath "vscode_cli"
+                  # Add to PATH for this session
+                  $env:PATH += ";$(Get-Location)\vscode_cli"
+                  echo "$(Get-Location)\vscode_cli" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+            - name: Start VS Code Tunnel
+              run: code tunnel --accept-server-license-terms --name "github-actions-tunnel"
