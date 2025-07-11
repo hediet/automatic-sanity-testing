@@ -92,7 +92,7 @@ export function getSteps(store: DisposableStore, artifactRef: ArtifactRef) {
                 const p = await driver.findRootProcesses({ executableName: 'Code.exe' });
 
                 return p.map(p => p.getAllWindows()[0]).find(e => e !== undefined);
-            }, { timeoutMs: 30 * 1000 });
+            }, { timeoutMs: 120 * 1000 });
 
             await waitMs(30_000); // CI is slow :/
 
