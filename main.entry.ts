@@ -27,10 +27,10 @@ async function main() {
             os: getOs(),
             type: target === "server" ? "server" : "desktop",
             flavor: ({
-                "user": "user",
+                "user-installer": "user",
                 "archive": "archive",
                 "server": "web",
-                "system": undefined,
+                "system-installer": undefined,
             } as any)[target],
         }),
         "stable",
