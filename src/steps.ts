@@ -128,6 +128,7 @@ function getSetupAndRunSteps() {
                 driver.clickElement(btn);
                 await process.waitForExit();
             }
+            console.log(`Starting VS Code setup at ${artifactPath}`);
             const p = await driver.createProcess(artifactPath);
             ctx.onReset(async () => await p.kill());
             return { driver, process: p };
