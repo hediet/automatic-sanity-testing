@@ -94,11 +94,7 @@ export function getSteps(store: DisposableStore, artifactRef: ArtifactRef) {
                 return p.map(p => p.getAllWindows()[0]).find(e => e !== undefined);
             }, { timeoutMs: 30 * 1000 });
 
-            await waitMs(15_000);
-
-            /*const screenshot = await driver.createScreenshot(window.rect);
-            const screenshotPath = join(outputDir, 'screenshot.png');
-            await writeFile(screenshotPath, Buffer.from(screenshot.base64Png, 'base64'));*/
+            await waitMs(30_000); // CI is slow :/
 
             return { driver, vscodeProcess: process };
         }),
