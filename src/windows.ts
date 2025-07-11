@@ -324,7 +324,7 @@ abstract class BaseWindowsProcess implements IProcess {
 
     async waitForUINode(predicate: (node: UINode) => boolean, options?: IWaitOptions): Promise<UINode> {
         let attempts = 0;
-        const maxAttempts = (options?.timeoutMs ?? 5000) / 500;
+        const maxAttempts = (options?.timeoutMs ?? 15_000) / 500;
         while (true) {
             const tree = await this._driver.getUiTreeForProcess(this.id, true);
 

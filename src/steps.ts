@@ -138,6 +138,7 @@ function getSetupAndRunSteps() {
             const isAdminDialog = (e: UINode) => !!e.text?.startsWith('This User Installer is not meant to be run as an Administrator.');
             const e = await process.waitForUINode(e => e.type === 'pane' && e.text === 'License Agreement' || isAdminDialog(e));
             if (isAdminDialog(e)) {
+                console.log('Detected admin dialog, clicking OK');
                 const okButton = await process.waitForUINode(e => e.type === 'button' && e.text === 'OK');
                 ctx.reportSideEffect();
                 await driver.clickElement(okButton);

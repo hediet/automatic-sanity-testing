@@ -82,26 +82,26 @@ jobs:
               run: npm run run -- --target=${{ matrix.target }} --vscode-commit=${{ matrix.vscodeCommit }}
               continue-on-error: true
 
-            - name: Install VS Code CLI
-              if: matrix.os == 'windows-11-arm'
-              run: |
-                  Invoke-WebRequest -Uri "https://code.visualstudio.com/sha/download?build=stable&os=cli-win32-arm64" -OutFile "vscode_cli.zip"
-                  Expand-Archive -Path "vscode_cli.zip" -DestinationPath "vscode_cli"
-                  # Add to PATH for this session
-                  $env:PATH += ";$(Get-Location)\vscode_cli"
-                  echo "$(Get-Location)\vscode_cli" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+            # - name: Install VS Code CLI
+            #   if: matrix.os == 'windows-11-arm'
+            #   run: |
+            #       Invoke-WebRequest -Uri "https://code.visualstudio.com/sha/download?build=stable&os=cli-win32-arm64" -OutFile "vscode_cli.zip"
+            #       Expand-Archive -Path "vscode_cli.zip" -DestinationPath "vscode_cli"
+            #       # Add to PATH for this session
+            #       $env:PATH += ";$(Get-Location)\vscode_cli"
+            #       echo "$(Get-Location)\vscode_cli" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
-            - name: Install VS Code CLI
-              if: matrix.os == 'windows-latest'
-              run: |
-                  Invoke-WebRequest -Uri "https://code.visualstudio.com/sha/download?build=stable&os=cli-win32-x64" -OutFile "vscode_cli.zip"
-                  Expand-Archive -Path "vscode_cli.zip" -DestinationPath "vscode_cli"
-                  # Add to PATH for this session
-                  $env:PATH += ";$(Get-Location)\vscode_cli"
-                  echo "$(Get-Location)\vscode_cli" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+            # - name: Install VS Code CLI
+            #   if: matrix.os == 'windows-latest'
+            #   run: |
+            #       Invoke-WebRequest -Uri "https://code.visualstudio.com/sha/download?build=stable&os=cli-win32-x64" -OutFile "vscode_cli.zip"
+            #       Expand-Archive -Path "vscode_cli.zip" -DestinationPath "vscode_cli"
+            #       # Add to PATH for this session
+            #       $env:PATH += ";$(Get-Location)\vscode_cli"
+            #       echo "$(Get-Location)\vscode_cli" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
-            - name: Start VS Code Tunnel
-              run: code tunnel --accept-server-license-terms
+            # - name: Start VS Code Tunnel
+            #   run: code tunnel --accept-server-license-terms
 
             - name: Upload output files
               uses: actions/upload-artifact@v4
