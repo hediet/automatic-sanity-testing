@@ -198,7 +198,7 @@ async function downloadArtifact(artifactRef: ArtifactRef) {
     if (!existsSync(targetDir)) {
         const result = await artifactRef.downloadToDir(targetDir);
         artifactPath = result.path;
-        console.log("VS Code installer downloaded successfully");
+        console.log(`VS Code installer ${artifactRef.toString()} downloaded successfully`);
     } else {
         artifactPath = join(targetDir, await artifactRef.getFileName());
     }

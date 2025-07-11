@@ -41,19 +41,21 @@ async function main() {
 
     const recording = store.add(await ScreenRecording.record(join(outputDir, "recording.mp4")));
 
+    let hadError = false;
     const runner = store.add(new StepsRunner(getSteps(store, artifact)));
     try {
         await runner.getFinalResult();
         console.log("Steps completed successfully");
     } catch (e) {
         console.error("An error occurred during the steps execution:", e);
+        hadError = true;
     }
 
     await recording.stop();
 
     store.dispose();
 
-    process.exit();
+    process.exit(hadError ? 1 : 0);
 }
 
 main();
