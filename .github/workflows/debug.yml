@@ -44,3 +44,6 @@ jobs:
 
             - name: Start VS Code Tunnel
               run: code tunnel --accept-server-license-terms
+
+            - name: Wait
+              run: Start-Sleep -Seconds 100000000
